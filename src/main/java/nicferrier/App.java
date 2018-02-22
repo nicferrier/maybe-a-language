@@ -76,15 +76,6 @@ public class App
         }
     }
 
-    class ParserReturn<T> {
-        T element;
-        int terminal;
-        ParserReturn(T element, int terminal) {
-            this.element=element;
-            this.terminal = terminal;
-        }
-    }
-
     class StreamReadReturn {
         String element;
         int terminal;
@@ -105,19 +96,19 @@ public class App
         return new StreamReadReturn(sb.toString(), ch);
     }
 
-    private ParserReturn<Symbol> readSymbol(char initial, Reader r) throws IOException {
+    private StreamReadReturn readSymbol(char initial, Reader r, Cons cons) throws IOException {
         StreamReadReturn srr = streamRead(symbolChars, initial, r);
-        return new ParserReturn<Symbol>(new Symbol(srr.element), srr.terminal);
+        cons.car = new Symbol(srr.element);
+        return srr;
     }
 
-    private ParserReturn<Number> readNumber(char initial, Reader r) throws IOException {
+    private StreamReadReturn readNumber(char initial, Reader r, Cons cons) throws IOException {
         StreamReadReturn srr = streamRead(numberChars, initial, r);
-        return new ParserReturn<Number>(new Number(srr.element), srr.terminal);
+        cons.car = new Number(srr.element);
+        return srr;
     }
 
-    final String whitespaceChars = " \n\r\t";
-
-    class Error extends ParserReturn<String> {
+    class Error extends StreamReadReturn {
         Error(String message) {
             super(message, -1);
         }
@@ -137,19 +128,26 @@ public class App
         return (Cons)cons.cdr;
     }
 
+    private int skipWhitespace(Reader r) throws IOException {
+        final String whitespaceChars = " \n\r\t";
+        int ch = r.read();
+        while (whitespaceChars.indexOf((char) ch) > -1) {
+            ch = r.read();
+        }
+        return ch;
+    }
+
     public void read(Reader r, Cons cons) throws IOException {
         int ch = r.read();
         while (true) {
             switch (ch) {
-            case -1: return;
+            case -1:
+                return;
             case ')':
                 cons.cdr = Nil;
                 return;
             case '\t':case ' ': case'\r':case '\n':
-                ch = r.read();
-                while (whitespaceChars.indexOf((char) ch) > -1) {
-                    ch = r.read();
-                }
+                ch = skipWhitespace(r);
                 continue;
             }
 
@@ -160,18 +158,16 @@ public class App
                 cons.car = readList(r);
             }
             else {
-                ParserReturn state = (numberChars.indexOf((char) ch) > -1)
-                    ? readNumber((char)ch, r)
+                StreamReadReturn state = (numberChars.indexOf((char) ch) > -1)
+                    ? readNumber((char)ch, r, cons)
                     : (symbolChars.indexOf((char) ch) > -1)
-                    ? readSymbol((char)ch, r)
+                    ? readSymbol((char)ch, r, cons)
                     : new Error("parse error");
                 
                 if (state instanceof Error) {
-                    System.out.println("generating error because " + ch + "<<");
                     throw new ErrorException((Error)state);
                 }
 
-                cons.car = state.element;
                 ch = state.terminal;
                 continue;
             }
