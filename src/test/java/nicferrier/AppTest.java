@@ -36,6 +36,11 @@ public class AppTest extends TestCase
         StringReader s = new StringReader("(let ((a 10)) a)");
         App.Cons lisp = a.read(s);
         System.out.println("list " + lisp.toString());
+        
+        StringReader s2 = new StringReader("(let ((a \"hello\")) a)");
+        lisp = a.read(s2);
+        System.out.println("list " + lisp.toString());
+
         assertTrue( true );
     }
 }

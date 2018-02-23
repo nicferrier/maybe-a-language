@@ -24,6 +24,15 @@ public class App
         }
     }
 
+    class FlispString extends Atom<String> {
+        FlispString(String string) {
+            super(string);
+        }
+        public String toString() {
+            return "\"" + super.toString() + "\"";
+        }
+    }
+    
     final String symbolChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
     final Symbol Nil = new Symbol("nil");
 
@@ -122,6 +131,20 @@ public class App
         }
     }
 
+    private void readString(Reader r, Cons cons) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        int ch = r.read();
+        while (ch != '"') {
+            if (ch == '\\') {
+                sb.append((char)ch);
+                ch = r.read();
+            }
+            sb.append((char)ch);
+            ch = r.read();
+        }
+        cons.car = new FlispString(sb.toString());
+    }
+
     private Cons readList(Reader r)  throws IOException {
         Cons cons = new Cons();
         read(r, cons);
@@ -146,7 +169,7 @@ public class App
             case ')':
                 cons.cdr = Nil;
                 return;
-            case '\t':case ' ': case'\r':case '\n':
+            case '\t': case ' ': case'\r': case '\n':
                 ch = skipWhitespace(r);
                 continue;
             }
@@ -156,6 +179,9 @@ public class App
 
             if (ch == '(') {
                 cons.car = readList(r);
+            }
+            else if (ch == '"') {
+                readString(r, cons);
             }
             else {
                 StreamReadReturn state = (numberChars.indexOf((char) ch) > -1)
