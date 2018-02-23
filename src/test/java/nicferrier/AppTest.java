@@ -33,14 +33,16 @@ public class AppTest extends TestCase
     public void testApp() throws IOException
     {
         App a = new App();
-        StringReader s = new StringReader("(let ((a 10)) a)");
-        App.Cons lisp = a.read(s);
-        System.out.println("list " + lisp.toString());
-        
-        StringReader s2 = new StringReader("(let ((a \"hello\")) a)");
-        lisp = a.read(s2);
-        System.out.println("list " + lisp.toString());
+        String form1 = "(let ((a 10)) a)";
+        App.Cons lisp1 = a.read(new StringReader(form1));
+        assertTrue("(let ((a 10.0)) a)".equals(lisp1.toString()));
 
-        assertTrue( true );
+        String form2 = "(let ((a \"hello\")) a)";
+        App.Cons lisp2 = a.read(new StringReader(form2));
+        assertTrue(form2.equals(lisp2.toString()));
+
+        String form3 = "(let ((a true)) a)";
+        App.Cons lisp3 = a.read(new StringReader(form3));
+        assertTrue(form3.equals(lisp3.toString()));
     }
 }
