@@ -1,0 +1,9 @@
+;;; demo
+
+
+(returns String
+  (lambda ((HTTP http)
+           (SearchForm form))
+    "hello"))
+
+;;; demo.flisp ends here
